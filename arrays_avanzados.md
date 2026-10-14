@@ -341,6 +341,37 @@ console.log("Posicion de Pepe: " + arrayPersonas.indexOf("Pepe"));
 
 En este caso devuelve `-1`, porque no hay ningún elemento que sea exactamente la cadena `"Pepe"`.
 
+Con un array de valores simples (cadenas o números) sí encuentra el elemento:
+
+```javascript
+const frutas = ["manzana", "pera", "uva", "kiwi"];
+
+console.log(frutas.indexOf("uva")); // 2
+console.log(frutas.indexOf("melón")); // -1 (no existe)
+```
+
+### Combinar `indexOf()` con `splice()` para eliminar un elemento
+
+Si sabemos el **valor** pero no la posición, primero buscamos el índice con `indexOf()` y después lo sacamos con `splice(posicion, 1)`, que modifica el array original:
+
+```javascript
+const posicion = frutas.indexOf("uva");
+
+// Comprobamos que existe antes de eliminar: splice(-1, 1) borraría el último elemento.
+if (posicion !== -1) {
+  const eliminado = frutas.splice(posicion, 1)[0];
+  console.log(eliminado); // "uva"
+}
+
+console.log(frutas); // ["manzana", "pera", "kiwi"]
+```
+
+Para un array de objetos, el equivalente es `findIndex()` con una condición:
+
+```javascript
+const posicionRafa = arrayPersonas.findIndex((p) => p.nombre == "Rafa");
+```
+
 **Importante:** `includes()` e `indexOf()` buscan valores concretos. Para buscar una propiedad dentro de objetos, normalmente utilizaremos métodos como `find()`, `findIndex()` o `some()`.
 
 ---
