@@ -20,13 +20,14 @@ const arrayPersonas = [
 
 ### Array de productos
 
-Cada producto tiene unas propiedades comunes, como `nombre`, `precio` y `tipo`, y otras que pueden variar según el producto.
+Cada producto tiene unas propiedades comunes, como `nombre`, `precio`, `stock` (unidades disponibles) y `tipo`, y otras que pueden variar según el producto.
 
 ```javascript
 const productos = [
   {
     nombre: "Camiseta",
     precio: 18.99,
+    stock: 23,
     tipo: "ropa",
     talla: "M",
     color: "azul",
@@ -34,6 +35,7 @@ const productos = [
   {
     nombre: "Pantalón",
     precio: 34.5,
+    stock: 25,
     tipo: "ropa",
     talla: "L",
     marca: "DenimCo",
@@ -41,6 +43,7 @@ const productos = [
   {
     nombre: "Auriculares",
     precio: 49.99,
+    stock: 64,
     tipo: "tecnología",
     marca: "SoundMax",
     inalámbricos: true,
@@ -48,6 +51,7 @@ const productos = [
   {
     nombre: "Ratón",
     precio: 15.75,
+    stock: 3,
     tipo: "tecnología",
     marca: "Click",
     inalámbricos: false,
@@ -55,6 +59,7 @@ const productos = [
   {
     nombre: "Manzana",
     precio: 0.8,
+    stock: 170,
     tipo: "alimentación",
     origen: "España",
     ecológico: true,
@@ -62,6 +67,7 @@ const productos = [
   {
     nombre: "Pan",
     precio: 1.2,
+    stock: 10,
     tipo: "alimentación",
     peso: "500 g",
   },
@@ -454,6 +460,176 @@ console.log(arrayPartidov2);
 
 ---
 
+## 13. Crear objetos nuevos con `map()` (seleccionar propiedades)
+
+`map()` también sirve para quedarnos solo con algunas propiedades de cada objeto.
+
+```javascript
+const nuevosProductos = productos.map((producto) => {
+  return {
+    nombre: producto.nombre,
+    precio: producto.precio,
+    tipo: producto.tipo,
+    talla: producto.talla,
+    color: producto.color,
+  };
+});
+```
+
+Si un producto no tiene alguna de esas propiedades (por ejemplo, `Pan` no tiene `talla`), su valor en el nuevo objeto será `undefined`.
+
+Otra forma de obtener un array nuevo (una copia superficial) es con `filter()` usando una condición que cumplan todos:
+
+```javascript
+const nuevosProductos = productos.filter(
+  (producto) => producto.nombre.length > 0,
+);
+```
+
+---
+
+## 14. Ordenar arrays con `sort()`
+
+`sort()` ordena el array **modificando el original** y recibe una función de comparación `(a, b)`:
+
+- Si devuelve un número negativo, `a` va antes que `b`.
+- Si devuelve un número positivo, `b` va antes que `a`.
+- Si devuelve `0`, se mantiene el orden.
+
+### Ordenar por número (precio de menor a mayor)
+
+```javascript
+nuevosProductos.sort((n1, n2) => n1.precio - n2.precio);
+```
+
+Para ordenar de mayor a menor, invertimos la resta: `n2.precio - n1.precio`.
+
+Como `nuevosProductos` es un array nuevo, el array `productos` mantiene su orden. Aun así, los objetos de dentro son **los mismos** (copia superficial): si modificamos una propiedad de un objeto en uno de los arrays, el cambio se ve en ambos.
+
+### Ordenar por texto (orden alfabético)
+
+```javascript
+productos.sort((n1, n2) => n1.nombre.localeCompare(n2.nombre));
+console.log(productos);
+```
+
+`localeCompare()` compara cadenas teniendo en cuenta el idioma (tildes, `ñ`...) y devuelve un número negativo, positivo o `0`, justo lo que necesita `sort()`.
+
+**Truco:** si no queremos modificar el original, podemos usar `toSorted()`, que devuelve un array nuevo ordenado.
+
+---
+
+## 15. Reducir un array a un solo valor con `reduce()`
+
+`reduce()` recorre el array y va acumulando un resultado. Recibe:
+
+1. Una función `(acumulador, elementoActual) => nuevoAcumulador`.
+2. Opcionalmente, el valor inicial del acumulador.
+
+### Media de un array de números
+
+```javascript
+const numeros = [5, 10, 15];
+
+const media =
+  numeros.reduce((acumulado, n) => acumulado + n, 0) / numeros.length;
+console.log(media); // 10
+```
+
+### Total de unidades en stock
+
+```javascript
+const totalUnidades = productos.reduce((acc, p) => acc + p.stock, 0);
+console.log(totalUnidades); // 295
+```
+
+### Valor total del inventario (precio × stock)
+
+```javascript
+const valorTodosLosProductos = productos.reduce(
+  (acc, p) => acc + p.precio * p.stock,
+  0,
+);
+console.log(valorTodosLosProductos);
+```
+
+### Producto más caro
+
+Sin valor inicial, el acumulador empieza siendo el primer elemento. En cada vuelta nos quedamos con el más caro de los dos:
+
+```javascript
+const masCaro = productos.reduce((masCaro, producto) =>
+  masCaro.precio > producto.precio ? masCaro : producto,
+);
+// { nombre: "Auriculares", precio: 49.99, ... }
+```
+
+### Alternativa: `Math.max()` con el operador spread
+
+Si solo queremos el **precio** máximo (no el objeto entero):
+
+```javascript
+const precioMax = Math.max(...productos.map((p) => p.precio)); // 49.99
+```
+
+- `map()` crea un array solo con los precios.
+- `...` (spread) "despliega" ese array en argumentos sueltos, porque `Math.max()` no acepta un array directamente.
+
+**Importante:** pon siempre el valor inicial (`0`) cuando sumes; si el array está vacío y no hay valor inicial, `reduce()` lanza un error.
+
+---
+
+## 16. Copia profunda con `structuredClone()`
+
+Copiar con `map()`, `filter()` o el spread (`[...array]`) crea una **copia superficial**: el array es nuevo, pero los objetos y arrays de dentro se comparten.
+
+`structuredClone()` crea una **copia profunda**: todo es independiente.
+
+```javascript
+const arrayOriginal = [1, [2, 3], { nombre: "Ana" }];
+
+// Crear la copia profunda
+const copiaProfunda = structuredClone(arrayOriginal);
+
+// Modificamos la copia para demostrar que son independientes
+copiaProfunda[1][0] = 99;
+copiaProfunda[2].nombre = "Carlos";
+
+console.log(arrayOriginal); // [1, [2, 3], { nombre: "Ana" }] <- ¡El original no cambia!
+console.log(copiaProfunda); // [1, [99, 3], { nombre: "Carlos" }]
+```
+
+---
+
+## 17. JSON: `JSON.stringify()` y `JSON.parse()`
+
+JSON es un formato de **texto** para guardar o enviar datos (por ejemplo, a un servidor o a `localStorage`).
+
+```javascript
+const producto = { nombre: "Taza", precio: 8, colores: ["blanco", "negro"] };
+
+// Objeto → texto
+const texto = JSON.stringify(producto);
+console.log(texto); // '{"nombre":"Taza","precio":8,"colores":["blanco","negro"]}'
+console.log(typeof texto); // "string"
+console.log(texto.nombre); // undefined ← es texto, no tiene propiedades
+
+// Bonito (con sangría de 2 espacios), útil para ver o guardar archivos
+console.log(JSON.stringify(producto, null, 2));
+
+// Texto → objeto
+const deVuelta = JSON.parse(texto);
+console.log(deVuelta.nombre); // "Taza"
+```
+
+- `JSON.stringify(valor)`: convierte un objeto/array en una cadena JSON.
+- `JSON.stringify(valor, null, 2)`: igual, pero con saltos de línea y sangría.
+- `JSON.parse(texto)`: convierte una cadena JSON de nuevo en objeto/array.
+
+**Curiosidad:** `JSON.parse(JSON.stringify(obj))` también hace una copia profunda, aunque `structuredClone()` es la forma moderna y más fiable.
+
+---
+
 ## Resumen de los métodos principales
 
 | Método        | ¿Qué hace?                                                         | ¿Modifica el array original? |
@@ -472,6 +648,11 @@ console.log(arrayPartidov2);
 | `unshift()`   | Añade elementos al principio.                                      | Sí                           |
 | `pop()`       | Elimina y devuelve el último elemento.                             | Sí                           |
 | `shift()`     | Elimina y devuelve el primer elemento.                             | Sí                           |
+| `sort()`      | Ordena los elementos según una función de comparación.             | Sí                           |
+| `toSorted()`  | Devuelve un array nuevo ordenado.                                  | No                           |
+| `reduce()`    | Acumula todos los elementos en un único valor.                     | No                           |
+
+**Otras herramientas vistas:** `structuredClone()` (copia profunda), `JSON.stringify()` / `JSON.parse()` (objeto ↔ texto) y `Math.max(...array)` (máximo de un array de números).
 
 ### Recomendación para estudiar
 
