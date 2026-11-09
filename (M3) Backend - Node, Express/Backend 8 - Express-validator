@@ -55,15 +55,17 @@ Y un par de funciones de la familia (`body`, `param`, `query`) según de dónde 
 Las reglas solo _apuntan_ los errores. Para _actuar_ necesitas leer el resultado con `validationResult(req)`. Esto va en un middleware propio, después de las reglas:
 
 ```js
-import { validationResult } from "express-validator";
+const { validationResult } = require("express-validator");
 
-export const validar = (req, res, next) => {
+const validar = (req, res, next) => {
   const errores = validationResult(req);
   if (!errores.isEmpty()) {
     return res.status(422).json({ errores: errores.array() });
   }
   next();
 };
+
+module.exports = { validar };
 ```
 
 Si hay errores, cortas la petición con un **422** y devuelves la lista. Si no los hay, llamas a `next()` y la petición sigue su camino hacia el controlador.
@@ -125,7 +127,7 @@ npm install express-validator
 Solo para ver el mecanismo funcionando, vamos a poner una regla suelta en tu ruta `POST`. Abre tu archivo de rutas e importa lo que necesitas:
 
 ```js
-import { body, validationResult } from "express-validator";
+const { body, validationResult } = require("express-validator");
 ```
 
 Añade una regla a tu ruta de crear (ajusta el nombre del campo a tu recurso real):
@@ -164,15 +166,17 @@ Ese bloque de `validationResult` no puede vivir dentro de cada controlador: lo r
 Crea `middlewares/validar.js` (o el nombre/carpeta que uses para middlewares):
 
 ```js
-import { validationResult } from "express-validator";
+const { validationResult } = require("express-validator");
 
-export const validar = (req, res, next) => {
+const validar = (req, res, next) => {
   const errores = validationResult(req);
   if (!errores.isEmpty()) {
     return res.status(422).json({ errores: errores.array() });
   }
   next();
 };
+
+module.exports = { validar };
 ```
 
 ### 2.2 Úsalo en la ruta
@@ -180,7 +184,7 @@ export const validar = (req, res, next) => {
 Ahora tu controlador vuelve a estar limpio, y la comprobación de errores es un middleware más en la cadena:
 
 ```js
-import { validar } from "../middlewares/validar.js";
+const { validar } = require("../middlewares/validar");
 
 router.post(
   "/",
@@ -209,9 +213,9 @@ Las reglas tampoco deberían vivir sueltas en el router. Las agrupamos por recur
 Crea `validators/recurso.validator.js` (sustituye `recurso` por tu entidad real: `usuario`, `producto`, `tarea`...). Exporta un **array de reglas**:
 
 ```js
-import { body } from "express-validator";
+const { body } = require("express-validator");
 
-export const reglasCrear = [
+const reglasCrear = [
   body("nombre")
     .notEmpty()
     .withMessage("El nombre es obligatorio")
@@ -224,13 +228,15 @@ export const reglasCrear = [
   // body("precio").isFloat({ min: 0 }).withMessage("El precio debe ser un número positivo"),
   // body("stock").isInt({ min: 0 }).withMessage("El stock debe ser un entero >= 0"),
 ];
+
+module.exports = { reglasCrear };
 ```
 
 ### 3.2 El router queda limpio
 
 ```js
-import { reglasCrear } from "../validators/recurso.validator.js";
-import { validar } from "../middlewares/validar.js";
+const { reglasCrear } = require("../validators/recurso.validator");
+const { validar } = require("../middlewares/validar");
 
 router.post("/", reglasCrear, validar, crearRecurso);
 ```
@@ -256,9 +262,9 @@ Crear no es lo único que recibe datos. El `PUT` también, y además trabaja con
 En tu `recurso.validator.js`, añade un segundo array. Al actualizar, a veces el usuario manda solo algunos campos, así que aquí `.optional()` es tu amigo:
 
 ```js
-import { body, param } from "express-validator";
+const { body, param } = require("express-validator");
 
-export const reglasActualizar = [
+const reglasActualizar = [
   param("id").isMongoId().withMessage("El id no es válido"),
 
   body("nombre")
@@ -270,6 +276,8 @@ export const reglasActualizar = [
 
   // ...el resto de campos, todos con .optional() en un PUT parcial
 ];
+
+module.exports = { reglasCrear, reglasActualizar };
 ```
 
 Fíjate en `param("id").isMongoId()`: como ahora usas MongoDB, los id son strings con un formato concreto. Si alguien pide `PUT /recurso/patata`, lo cazas **antes** de ir a la base de datos, en lugar de esperar a que Mongoose explote.
@@ -277,7 +285,7 @@ Fíjate en `param("id").isMongoId()`: como ahora usas MongoDB, los id son string
 ### 4.2 Conéctalo
 
 ```js
-import { reglasActualizar } from "../validators/recurso.validator.js";
+const { reglasActualizar } = require("../validators/recurso.validator");
 
 router.put("/:id", reglasActualizar, validar, actualizarRecurso);
 ```
@@ -302,7 +310,7 @@ Haz un `POST` con varios campos mal a la vez y mira la respuesta. Vas a ver que 
 Para un frontend, a veces interesa una forma más limpia. Mejora tu middleware `validar.js` para devolver solo lo útil:
 
 ```js
-export const validar = (req, res, next) => {
+const validar = (req, res, next) => {
   const errores = validationResult(req);
   if (!errores.isEmpty()) {
     return res.status(422).json({
@@ -314,6 +322,8 @@ export const validar = (req, res, next) => {
   }
   next();
 };
+
+module.exports = { validar };
 ```
 
 Ahora la respuesta es un array de `{ campo, mensaje }`, perfecto para que un frontend pinte los errores junto a cada input. Pruébalo con varios errores a la vez.
